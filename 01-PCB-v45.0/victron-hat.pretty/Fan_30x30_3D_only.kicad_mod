@@ -1,0 +1,17 @@
+(footprint "Fan_30x30_3D_only" (version 20221018) (generator pcbnew)
+  (layer "F.Cu")
+  (attr board_only exclude_from_pos_files exclude_from_bom)
+  (fp_text reference "REF**" (at 0 0) (layer "F.Fab") hide
+      (effects (font (size 1.27 1.27) (thickness 0.15)))
+    (tstamp 05ba7444-f664-4fee-905c-ab193d5f8636)
+  )
+  (fp_text value "30x30x10 fan (3D only)" (at 0 0) (layer "F.Fab") hide
+      (effects (font (size 1.27 1.27) (thickness 0.15)))
+    (tstamp 341c041e-220c-47ae-b5a2-d1b0913b7433)
+  )
+  (model "${KIPRJMOD}/victron-hat.3dshapes/Fan_30x30x10_on_top.wrl"
+    (offset (xyz 0 0 0))
+    (scale (xyz 1 1 1))
+    (rotate (xyz 0 0 0))
+  )
+)
