@@ -2,9 +2,7 @@
 
 A 4-layer, 85 x 56 mm Raspberry Pi 5 HAT for Victron Venus OS. It adds three VE.Direct ports, VE.Can, RS485, four low-side relay outputs, four opto-isolated inputs, a fan output, a buzzer and a plug-on 5 V / 5 A supply for the Pi, all fed from a 7-40 V battery input. Fabrication: JLCPCB. Designer: Dilip Kumar TD.
 
-| Top | Bottom |
-|---|---|
-| ![Top](01-PCB-v45.0/victron-hat-v45.0-TOP-green.jpg) | ![Bottom](01-PCB-v45.0/victron-hat-v45.0-BOTTOM-green.jpg) |
+
 
 ## 1. Key specification
 
