@@ -1,4 +1,0 @@
-(sym_lib_table
-  (version 7)
-  (lib (name "victron-hat")(type "KiCad")(uri "${KIPRJMOD}/victron-hat.kicad_sym")(options "")(descr "Generated symbols"))
-)
