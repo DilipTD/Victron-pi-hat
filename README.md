@@ -98,7 +98,7 @@ Port wiring: J101 7-40 V (1 = -, 2 = +); J301/J302/J401 VE.Direct JST PH 4-pin; 
 
 | Path | Content |
 |---|---|
-| 01-PCB-v45.0/ | KiCad project, libraries, Gerbers, BOM, CPL, simulation, checks |
+| 01-PCB-v45.0/ | Gerbers, BOM, CPL, Schematic, checks |
 | 01-PCB-v45.0/JLCPCB/ | Gerber zip to upload to JLCPCB |
 | 02-VenusOS-software-v4.2/ | Venus OS package (SetupHelper) and HAT EEPROM |
 | 03-GUI-screenshots/, 04-3D-preview/ | GUI renderings, 3D preview |
