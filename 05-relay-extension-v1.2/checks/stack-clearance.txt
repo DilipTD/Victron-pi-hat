@@ -1,0 +1,9 @@
+Extension bottom above HAT top: 22.00 mm (22 mm stack)
+Tallest HAT parts under the extension (height above HAT top, mm):
+  19.55
+  19.55
+  18.80
+  12.05
+  12.05
+  11.05
+Tallest part: C903 supercap (about 19.6 mm in the 3D model), about 2.4 mm clearance.

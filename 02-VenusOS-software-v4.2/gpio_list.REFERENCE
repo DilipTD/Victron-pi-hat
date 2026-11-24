@@ -1,0 +1,10 @@
+# Pin map of Victron Pi HAT v25.0 - for a custom
+# /data/setupOptions/RpiGpioSetup/gpio_list. Copy the syntax from the
+# gpio_list shipped with RpiGpioSetup; only the GPIO numbers come from here.
+# Relays (ULN2003, active HIGH):  relay_1=21  relay_2=17  relay_3=27  relay_4=22
+# Buzzer (ULN2003 ch.6):          GPIO24 (handled by hat-boot.sh)
+# OUT5 fan header J603 (ULN2003 ch.5+7, board v25.0): GPIO23 - handled by
+#   vichat_dbus.py (diag.json fan_mode). Do NOT add GPIO23 to gpio_list.
+# Digital inputs (opto, active = pin reads LOW):  in1=5  in2=6  in3=13  in4=19
+# Do NOT use: 2,3 (I2C) 4,12,25 (IRQ) 7-11 (SPI/CE) 14,15 (console UART) 23 (fan, v25.0)
+# Free: 16 18 20 26

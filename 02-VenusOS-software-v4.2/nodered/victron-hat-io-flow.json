@@ -1,0 +1,825 @@
+[
+ {
+  "id": "882528e063304390",
+  "type": "tab",
+  "label": "Victron HAT I/O",
+  "disabled": false,
+  "info": "All HAT inputs, outputs and analog values (board v24, package v1.9) via the local Venus MQTT broker.\nNeeds: Settings > Services > MQTT Access = ON (Venus OS 3.x)."
+ },
+ {
+  "id": "21b78751ff6e41b9",
+  "type": "mqtt-broker",
+  "name": "Venus local MQTT",
+  "broker": "localhost",
+  "port": "1883",
+  "clientid": "",
+  "autoConnect": true,
+  "usetls": false,
+  "protocolVersion": "4",
+  "keepalive": "60",
+  "cleansession": true
+ },
+ {
+  "id": "2592354052b5462c",
+  "type": "mqtt out",
+  "z": "882528e063304390",
+  "name": "to Venus",
+  "x": 1060,
+  "y": 560,
+  "wires": [],
+  "topic": "",
+  "qos": "",
+  "retain": "",
+  "broker": "21b78751ff6e41b9"
+ },
+ {
+  "id": "266434154496443d",
+  "type": "function",
+  "z": "882528e063304390",
+  "name": "store portal id",
+  "x": 420,
+  "y": 60,
+  "wires": [
+   [
+    "c272806fd7e949a2"
+   ]
+  ],
+  "func": "const id = msg.topic.split('/')[1];\nif (!id || flow.get('portal') === id) return null;\nflow.set('portal', id); flow.set('ka_sent', false);\nreturn {payload: 'portal ' + id};   // first keepalive right away",
+  "outputs": 1,
+  "noerr": 0,
+  "initialize": "",
+  "finalize": "",
+  "libs": []
+ },
+ {
+  "id": "086338ae600f46f8",
+  "type": "mqtt in",
+  "z": "882528e063304390",
+  "name": "portal id",
+  "x": 160,
+  "y": 60,
+  "wires": [
+   [
+    "266434154496443d"
+   ]
+  ],
+  "topic": "N/+/system/0/Serial",
+  "qos": "0",
+  "datatype": "auto-detect",
+  "broker": "21b78751ff6e41b9",
+  "nl": false,
+  "rap": true,
+  "rh": 0,
+  "inputs": 0
+ },
+ {
+  "id": "c272806fd7e949a2",
+  "type": "function",
+  "z": "882528e063304390",
+  "name": "keepalive",
+  "x": 420,
+  "y": 110,
+  "wires": [
+   [
+    "2592354052b5462c"
+   ]
+  ],
+  "func": "// Venus flashmq: the first keepalive asks for a full republish of all N/ topics,\n// later ones only keep the subscription alive (no flood every 30 s).\nconst id = flow.get('portal');\nif (!id) return null;\nconst first = !flow.get('ka_sent'); flow.set('ka_sent', true);\nreturn {topic: 'R/' + id + '/keepalive', payload: first ? '' : JSON.stringify({'keepalive-options': ['suppress-republish']})};",
+  "outputs": 1,
+  "noerr": 0,
+  "initialize": "",
+  "finalize": "",
+  "libs": []
+ },
+ {
+  "id": "9222d64344e34030",
+  "type": "inject",
+  "z": "882528e063304390",
+  "name": "every 30 s",
+  "x": 170,
+  "y": 110,
+  "wires": [
+   [
+    "c272806fd7e949a2"
+   ]
+  ],
+  "props": [
+   {
+    "p": "payload"
+   }
+  ],
+  "repeat": "30",
+  "crontab": "",
+  "once": true,
+  "onceDelay": "2",
+  "topic": "",
+  "payload": "",
+  "payloadType": "date"
+ },
+ {
+  "id": "21d32c758fa44b03",
+  "type": "debug",
+  "z": "882528e063304390",
+  "name": "analog",
+  "x": 1060,
+  "y": 200,
+  "wires": [],
+  "active": false,
+  "tosidebar": true,
+  "console": false,
+  "tostatus": true,
+  "complete": "payload",
+  "targetType": "msg",
+  "statusVal": "payload",
+  "statusType": "auto"
+ },
+ {
+  "id": "bf1d43b141cd40a0",
+  "type": "function",
+  "z": "882528e063304390",
+  "name": "HAT analog -> global.hat",
+  "x": 520,
+  "y": 200,
+  "wires": [
+   [
+    "21d32c758fa44b03"
+   ]
+  ],
+  "func": "const NAMES = {CpuMHz:'CPU speed MHz', CpuLoadPct:'CPU load %', CpuTempC:'CPU temperature C', RamPct:'RAM used %', RamUsedMB:'RAM used MB', DataPct:'/data used %', Uptime:'Uptime', PiVolt:'Pi power / throttling', Venus:'Venus OS version'};\nconst key = msg.topic.split('/').pop();\nlet v = msg.payload; if (v && typeof v === 'object') v = v.value;\nconst hat = global.get('hat') || {}; hat[key] = v; global.set('hat', hat);\nmsg.topic = key; msg.label = NAMES[key] || key; msg.payload = v;\nreturn msg;",
+  "outputs": 1,
+  "noerr": 0,
+  "initialize": "",
+  "finalize": "",
+  "libs": []
+ },
+ {
+  "id": "8e1c2b258a0641a6",
+  "type": "mqtt in",
+  "z": "882528e063304390",
+  "name": "HAT analog (MCP3208)",
+  "x": 180,
+  "y": 200,
+  "wires": [
+   [
+    "bf1d43b141cd40a0"
+   ]
+  ],
+  "topic": "N/+/vichat/0/System/+",
+  "qos": "0",
+  "datatype": "auto-detect",
+  "broker": "21b78751ff6e41b9",
+  "nl": false,
+  "rap": true,
+  "rh": 0,
+  "inputs": 0
+ },
+ {
+  "id": "6d1041a941414e64",
+  "type": "debug",
+  "z": "882528e063304390",
+  "name": "temperature",
+  "x": 1060,
+  "y": 250,
+  "wires": [],
+  "active": false,
+  "tosidebar": true,
+  "console": false,
+  "tostatus": true,
+  "complete": "payload",
+  "targetType": "msg",
+  "statusVal": "payload",
+  "statusType": "auto"
+ },
+ {
+  "id": "b04fb301434146ef",
+  "type": "function",
+  "z": "882528e063304390",
+  "name": "5 V supply temperature",
+  "x": 520,
+  "y": 250,
+  "wires": [
+   [
+    "6d1041a941414e64"
+   ]
+  ],
+  "func": "let v=msg.payload; if (v&&typeof v==='object') v=v.value;\nconst hat=global.get('hat')||{}; hat.T1=v; global.set('hat',hat);\nmsg.topic='T1'; msg.payload=v; return msg;",
+  "outputs": 1,
+  "noerr": 0,
+  "initialize": "",
+  "finalize": "",
+  "libs": []
+ },
+ {
+  "id": "89b4289975734f8c",
+  "type": "mqtt in",
+  "z": "882528e063304390",
+  "name": "5 V supply temperature",
+  "x": 180,
+  "y": 250,
+  "wires": [
+   [
+    "b04fb301434146ef"
+   ]
+  ],
+  "topic": "N/+/temperature/291/Temperature",
+  "qos": "0",
+  "datatype": "auto-detect",
+  "broker": "21b78751ff6e41b9",
+  "nl": false,
+  "rap": true,
+  "rh": 0,
+  "inputs": 0
+ },
+ {
+  "id": "8a9acd6d805c4de1",
+  "type": "debug",
+  "z": "882528e063304390",
+  "name": "inputs",
+  "x": 1060,
+  "y": 320,
+  "wires": [],
+  "active": false,
+  "tosidebar": true,
+  "console": false,
+  "tostatus": true,
+  "complete": "payload",
+  "targetType": "msg",
+  "statusVal": "payload",
+  "statusType": "auto"
+ },
+ {
+  "id": "4537f9e74bb24e80",
+  "type": "function",
+  "z": "882528e063304390",
+  "name": "IN1-IN4",
+  "x": 520,
+  "y": 320,
+  "wires": [
+   [
+    "8a9acd6d805c4de1"
+   ]
+  ],
+  "func": "const n = parseInt(msg.topic.split('/')[5]);\nlet v = msg.payload; if (v && typeof v === 'object') v = v.value;\nconst hat = global.get('hat') || {}; hat['IN'+(n+1)] = v; global.set('hat', hat);\nmsg.topic = 'IN' + (n + 1); msg.payload = v;\nreturn msg;",
+  "outputs": 1,
+  "noerr": 0,
+  "initialize": "",
+  "finalize": "",
+  "libs": []
+ },
+ {
+  "id": "16867cc9b4284b55",
+  "type": "mqtt in",
+  "z": "882528e063304390",
+  "name": "IN1-IN4 (0/1)",
+  "x": 170,
+  "y": 320,
+  "wires": [
+   [
+    "4537f9e74bb24e80"
+   ]
+  ],
+  "topic": "N/+/vichat/0/In/+/State",
+  "qos": "0",
+  "datatype": "auto-detect",
+  "broker": "21b78751ff6e41b9",
+  "nl": false,
+  "rap": true,
+  "rh": 0,
+  "inputs": 0
+ },
+ {
+  "id": "a31fcd88b3594de6",
+  "type": "debug",
+  "z": "882528e063304390",
+  "name": "outputs",
+  "x": 1060,
+  "y": 380,
+  "wires": [],
+  "active": false,
+  "tosidebar": true,
+  "console": false,
+  "tostatus": true,
+  "complete": "payload",
+  "targetType": "msg",
+  "statusVal": "payload",
+  "statusType": "auto"
+ },
+ {
+  "id": "aa3574ecf58b4110",
+  "type": "function",
+  "z": "882528e063304390",
+  "name": "OUT1-OUT4 state",
+  "x": 520,
+  "y": 380,
+  "wires": [
+   [
+    "a31fcd88b3594de6"
+   ]
+  ],
+  "func": "const n = parseInt(msg.topic.split('/')[5]);\nlet v = msg.payload; if (v && typeof v === 'object') v = v.value;\nconst hat = global.get('hat') || {}; hat['OUT'+(n+1)] = v; global.set('hat', hat);\nmsg.topic = 'OUT' + (n + 1); msg.payload = v;\nreturn msg;",
+  "outputs": 1,
+  "noerr": 0,
+  "initialize": "",
+  "finalize": "",
+  "libs": []
+ },
+ {
+  "id": "4202c87d06e0442d",
+  "type": "mqtt in",
+  "z": "882528e063304390",
+  "name": "OUT1-OUT4 (0/1)",
+  "x": 170,
+  "y": 380,
+  "wires": [
+   [
+    "aa3574ecf58b4110"
+   ]
+  ],
+  "topic": "N/+/vichat/0/Out/+/State",
+  "qos": "0",
+  "datatype": "auto-detect",
+  "broker": "21b78751ff6e41b9",
+  "nl": false,
+  "rap": true,
+  "rh": 0,
+  "inputs": 0
+ },
+ {
+  "id": "556734627d03496b",
+  "type": "function",
+  "z": "882528e063304390",
+  "name": "set OUTx / FAN / BUZZER",
+  "x": 760,
+  "y": 560,
+  "wires": [
+   [
+    "2592354052b5462c"
+   ]
+  ],
+  "func": "// msg.topic = 'OUT1'..'OUT4' or 'BUZZER', msg.payload = 1/0 (true/false)\n// msg.topic = 'FAN' (OUT5, J603, board v25.0): msg.payload = 'off'/0, 'on'/1, 'auto'/2\nconst id = flow.get('portal'); if (!id) { node.warn('portal id not known yet'); return null; }\nconst p = msg.payload;\nif (msg.topic === 'FAN') {\n  const m = {off: 0, on: 1, auto: 2}[String(p).toLowerCase()] ?? (p === true ? 1 : p === false ? 0 : Number(p));\n  if (![0, 1, 2].includes(m)) { node.warn('FAN payload must be off/on/auto or 0/1/2'); return null; }\n  return {topic: 'W/' + id + '/vichat/0/Fan/Mode', payload: JSON.stringify({value: m})};\n}\nconst v = (p === true || p === 1 || p === '1' || p === 'on') ? 1 : 0;\nlet path;\nif (/^OUT[1-4]$/.test(msg.topic)) path = 'vichat/0/Out/' + (parseInt(msg.topic.slice(3)) - 1) + '/State';\nelse if (msg.topic === 'BUZZER') path = 'vichat/0/Buzzer/Test';\nelse { node.warn('topic must be OUT1..OUT4, FAN or BUZZER'); return null; }\nreturn {topic: 'W/' + id + '/' + path, payload: JSON.stringify({value: v})};",
+  "outputs": 1,
+  "noerr": 0,
+  "initialize": "",
+  "finalize": "",
+  "libs": []
+ },
+ {
+  "id": "a8fba54ecf5249ec",
+  "type": "inject",
+  "z": "882528e063304390",
+  "name": "OUT1 ON",
+  "x": 170,
+  "y": 480,
+  "wires": [
+   [
+    "556734627d03496b"
+   ]
+  ],
+  "props": [
+   {
+    "p": "payload"
+   },
+   {
+    "p": "topic",
+    "vt": "str"
+   }
+  ],
+  "repeat": "",
+  "crontab": "",
+  "once": false,
+  "onceDelay": 0.1,
+  "topic": "OUT1",
+  "payload": "1",
+  "payloadType": "num"
+ },
+ {
+  "id": "ae60b8763ade4512",
+  "type": "inject",
+  "z": "882528e063304390",
+  "name": "OUT1 OFF",
+  "x": 330,
+  "y": 480,
+  "wires": [
+   [
+    "556734627d03496b"
+   ]
+  ],
+  "props": [
+   {
+    "p": "payload"
+   },
+   {
+    "p": "topic",
+    "vt": "str"
+   }
+  ],
+  "repeat": "",
+  "crontab": "",
+  "once": false,
+  "onceDelay": 0.1,
+  "topic": "OUT1",
+  "payload": "0",
+  "payloadType": "num"
+ },
+ {
+  "id": "7e2e80e619604e6a",
+  "type": "inject",
+  "z": "882528e063304390",
+  "name": "OUT2 ON",
+  "x": 170,
+  "y": 520,
+  "wires": [
+   [
+    "556734627d03496b"
+   ]
+  ],
+  "props": [
+   {
+    "p": "payload"
+   },
+   {
+    "p": "topic",
+    "vt": "str"
+   }
+  ],
+  "repeat": "",
+  "crontab": "",
+  "once": false,
+  "onceDelay": 0.1,
+  "topic": "OUT2",
+  "payload": "1",
+  "payloadType": "num"
+ },
+ {
+  "id": "33cc5a40df744528",
+  "type": "inject",
+  "z": "882528e063304390",
+  "name": "OUT2 OFF",
+  "x": 330,
+  "y": 520,
+  "wires": [
+   [
+    "556734627d03496b"
+   ]
+  ],
+  "props": [
+   {
+    "p": "payload"
+   },
+   {
+    "p": "topic",
+    "vt": "str"
+   }
+  ],
+  "repeat": "",
+  "crontab": "",
+  "once": false,
+  "onceDelay": 0.1,
+  "topic": "OUT2",
+  "payload": "0",
+  "payloadType": "num"
+ },
+ {
+  "id": "cf6aa82484f64fe3",
+  "type": "inject",
+  "z": "882528e063304390",
+  "name": "OUT3 ON",
+  "x": 170,
+  "y": 560,
+  "wires": [
+   [
+    "556734627d03496b"
+   ]
+  ],
+  "props": [
+   {
+    "p": "payload"
+   },
+   {
+    "p": "topic",
+    "vt": "str"
+   }
+  ],
+  "repeat": "",
+  "crontab": "",
+  "once": false,
+  "onceDelay": 0.1,
+  "topic": "OUT3",
+  "payload": "1",
+  "payloadType": "num"
+ },
+ {
+  "id": "7c3fded4400e4bd0",
+  "type": "inject",
+  "z": "882528e063304390",
+  "name": "OUT3 OFF",
+  "x": 330,
+  "y": 560,
+  "wires": [
+   [
+    "556734627d03496b"
+   ]
+  ],
+  "props": [
+   {
+    "p": "payload"
+   },
+   {
+    "p": "topic",
+    "vt": "str"
+   }
+  ],
+  "repeat": "",
+  "crontab": "",
+  "once": false,
+  "onceDelay": 0.1,
+  "topic": "OUT3",
+  "payload": "0",
+  "payloadType": "num"
+ },
+ {
+  "id": "98432fe275174f74",
+  "type": "inject",
+  "z": "882528e063304390",
+  "name": "OUT4 ON",
+  "x": 170,
+  "y": 600,
+  "wires": [
+   [
+    "556734627d03496b"
+   ]
+  ],
+  "props": [
+   {
+    "p": "payload"
+   },
+   {
+    "p": "topic",
+    "vt": "str"
+   }
+  ],
+  "repeat": "",
+  "crontab": "",
+  "once": false,
+  "onceDelay": 0.1,
+  "topic": "OUT4",
+  "payload": "1",
+  "payloadType": "num"
+ },
+ {
+  "id": "60c56c86bafc424e",
+  "type": "inject",
+  "z": "882528e063304390",
+  "name": "OUT4 OFF",
+  "x": 330,
+  "y": 600,
+  "wires": [
+   [
+    "556734627d03496b"
+   ]
+  ],
+  "props": [
+   {
+    "p": "payload"
+   },
+   {
+    "p": "topic",
+    "vt": "str"
+   }
+  ],
+  "repeat": "",
+  "crontab": "",
+  "once": false,
+  "onceDelay": 0.1,
+  "topic": "OUT4",
+  "payload": "0",
+  "payloadType": "num"
+ },
+ {
+  "id": "97b6ec87caf94ef9",
+  "type": "inject",
+  "z": "882528e063304390",
+  "name": "BUZZER beep",
+  "x": 170,
+  "y": 640,
+  "wires": [
+   [
+    "556734627d03496b"
+   ]
+  ],
+  "props": [
+   {
+    "p": "payload"
+   },
+   {
+    "p": "topic",
+    "vt": "str"
+   }
+  ],
+  "repeat": "",
+  "crontab": "",
+  "once": false,
+  "onceDelay": 0.1,
+  "topic": "BUZZER",
+  "payload": "1",
+  "payloadType": "num"
+ },
+ {
+  "id": "f6e6dd15a25540ac",
+  "type": "debug",
+  "z": "882528e063304390",
+  "name": "snapshot",
+  "x": 1060,
+  "y": 800,
+  "wires": [],
+  "active": false,
+  "tosidebar": true,
+  "console": false,
+  "tostatus": true,
+  "complete": "payload",
+  "targetType": "msg",
+  "statusVal": "payload",
+  "statusType": "auto"
+ },
+ {
+  "id": "8249decdaa7f45ae",
+  "type": "function",
+  "z": "882528e063304390",
+  "name": "read global.hat",
+  "x": 520,
+  "y": 800,
+  "wires": [
+   [
+    "f6e6dd15a25540ac"
+   ]
+  ],
+  "func": "// every HAT value in one object:\n// {Vin, Iin, Pin, V5reg, Iout, Pout, Efficiency, Vpi, V3v3, I3v3, P3v3, T1, Status, IN1..IN4, OUT1..OUT4, FAN, FAN_MODE}\nmsg.payload = global.get('hat') || {};\nreturn msg;",
+  "outputs": 1,
+  "noerr": 0,
+  "initialize": "",
+  "finalize": "",
+  "libs": []
+ },
+ {
+  "id": "174bbb5b77824afe",
+  "type": "inject",
+  "z": "882528e063304390",
+  "name": "every 10 s",
+  "x": 170,
+  "y": 800,
+  "wires": [
+   [
+    "8249decdaa7f45ae"
+   ]
+  ],
+  "props": [
+   {
+    "p": "payload"
+   }
+  ],
+  "repeat": "10",
+  "crontab": "",
+  "once": true,
+  "onceDelay": "5",
+  "topic": "",
+  "payload": "",
+  "payloadType": "date"
+ },
+ {
+  "id": "dd7c693f738a43b3",
+  "type": "comment",
+  "z": "882528e063304390",
+  "name": "Victron HAT: inputs, outputs and analog values",
+  "x": 200,
+  "y": 20,
+  "wires": [],
+  "info": "global.hat holds every value; set outputs with msg.topic OUT1..OUT4 / BUZZER and payload 1/0 into 'set OUTx / BUZZER'."
+ },
+ {
+  "id": "f5a0000000000001",
+  "type": "inject",
+  "z": "882528e063304390",
+  "name": "FAN (OUT5) AUTO",
+  "x": 170,
+  "y": 680,
+  "wires": [
+   [
+    "556734627d03496b"
+   ]
+  ],
+  "props": [
+   {
+    "p": "payload"
+   },
+   {
+    "p": "topic",
+    "vt": "str"
+   }
+  ],
+  "repeat": "",
+  "crontab": "",
+  "once": false,
+  "onceDelay": 0.1,
+  "topic": "FAN",
+  "payload": "auto",
+  "payloadType": "str"
+ },
+ {
+  "id": "f5a0000000000002",
+  "type": "inject",
+  "z": "882528e063304390",
+  "name": "FAN ON",
+  "x": 330,
+  "y": 680,
+  "wires": [
+   [
+    "556734627d03496b"
+   ]
+  ],
+  "props": [
+   {
+    "p": "payload"
+   },
+   {
+    "p": "topic",
+    "vt": "str"
+   }
+  ],
+  "repeat": "",
+  "crontab": "",
+  "once": false,
+  "onceDelay": 0.1,
+  "topic": "FAN",
+  "payload": "on",
+  "payloadType": "str"
+ },
+ {
+  "id": "f5a0000000000003",
+  "type": "inject",
+  "z": "882528e063304390",
+  "name": "FAN OFF",
+  "x": 330,
+  "y": 720,
+  "wires": [
+   [
+    "556734627d03496b"
+   ]
+  ],
+  "props": [
+   {
+    "p": "payload"
+   },
+   {
+    "p": "topic",
+    "vt": "str"
+   }
+  ],
+  "repeat": "",
+  "crontab": "",
+  "once": false,
+  "onceDelay": 0.1,
+  "topic": "FAN",
+  "payload": "off",
+  "payloadType": "str"
+ },
+ {
+  "id": "f5a0000000000010",
+  "type": "function",
+  "z": "882528e063304390",
+  "name": "OUT5 fan state",
+  "x": 520,
+  "y": 440,
+  "wires": [
+   [
+    "a31fcd88b3594de6"
+   ]
+  ],
+  "func": "let v = msg.payload; if (v && typeof v === 'object') v = v.value;\nconst k = {State: 'FAN', Mode: 'FAN_MODE'}[msg.topic.split('/').pop()];\nif (!k) return null;   // /Fan/Present, /Fan/Temperature, ... not needed here\nconst hat = global.get('hat') || {}; hat[k] = v; global.set('hat', hat);\nmsg.topic = k; msg.payload = v;\nreturn msg;",
+  "outputs": 1,
+  "noerr": 0,
+  "initialize": "",
+  "finalize": "",
+  "libs": []
+ },
+ {
+  "id": "f5a0000000000011",
+  "type": "mqtt in",
+  "z": "882528e063304390",
+  "name": "OUT5 fan state + mode",
+  "x": 170,
+  "y": 440,
+  "wires": [
+   [
+    "f5a0000000000010"
+   ]
+  ],
+  "topic": "N/+/vichat/0/Fan/+",
+  "qos": "0",
+  "datatype": "auto-detect",
+  "broker": "21b78751ff6e41b9",
+  "nl": false,
+  "rap": true,
+  "rh": 0,
+  "inputs": 0
+ }
+]

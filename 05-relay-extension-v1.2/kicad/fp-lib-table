@@ -1,0 +1,3 @@
+(fp_lib_table
+  (lib (name "relay-ext")(type "KiCad")(uri "${KIPRJMOD}/relay-ext.pretty")(options "")(descr "Relay extension footprints"))
+)

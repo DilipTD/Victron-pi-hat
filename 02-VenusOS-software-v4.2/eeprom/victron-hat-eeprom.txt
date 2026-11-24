@@ -1,0 +1,38 @@
+########################################################################
+# Victron Pi HAT v28.x - HAT ID EEPROM settings (legacy V1 HAT format,
+# Raspberry Pi 3). Build:  eepmake -v1 victron-hat-eeprom.txt victron-hat.eep victron-hat.dtbo
+########################################################################
+product_uuid 3b6a1f6e-6d2a-4c1e-9b7e-5f1d2a9c0920
+product_id 0x0001
+product_ver 0x0F00
+vendor "Dilip Kumar TD"
+product "Victron Pi HAT"
+########################################################################
+gpio_drive 0
+gpio_slew 0
+gpio_hysteresis 0
+# HAT 5 V supply (U101 module) feeds the Pi directly (>= 2 A); never power the Pi from USB-C with the HAT fitted
+back_power 2
+########################################################################
+#         GPIO  FUNCTION  PULL
+setgpio   2     ALT0      DEFAULT
+setgpio   3     ALT0      DEFAULT
+setgpio   4     INPUT     UP
+setgpio   16    OUTPUT    UP
+setgpio   5     INPUT     UP
+setgpio   6     INPUT     UP
+setgpio   12    INPUT     UP
+setgpio   13    INPUT     UP
+setgpio   17    OUTPUT    DEFAULT
+setgpio   19    INPUT     UP
+setgpio   21    OUTPUT    DEFAULT
+setgpio   22    OUTPUT    DEFAULT
+setgpio   24    OUTPUT    DEFAULT
+setgpio   23    OUTPUT    DEFAULT
+setgpio   25    INPUT     NONE
+setgpio   27    OUTPUT    DEFAULT
+setgpio   7     OUTPUT    DEFAULT
+setgpio   8     ALT0      DEFAULT
+setgpio   9     ALT0      DEFAULT
+setgpio   10    ALT0      DEFAULT
+setgpio   11    ALT0      DEFAULT

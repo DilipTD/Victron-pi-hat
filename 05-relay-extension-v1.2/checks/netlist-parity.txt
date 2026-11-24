@@ -1,0 +1,2 @@
+parity: 54 pads checked, 0 mismatches, refs equal True, footprint ids match True
+holes [('H3', (17.0, 28.0)), ('H1', (17.0, 4.0)), ('H4', (41.0, 28.0)), ('H2', (41.0, 4.0))]

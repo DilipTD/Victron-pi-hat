@@ -1,0 +1,10 @@
+# --- VictronHat begin (v20.5 board) ---
+[all]
+dtparam=i2c_arm=on
+dtparam=spi=on
+# 2x SC16IS752 on I2C, 14.7456 MHz crystal (v29.4): ttySC0-1 = J301/J302, ttySC2 = J401, ttySC3 = J402 RS485
+dtoverlay=sc16is752-i2c,addr=0x48,int_pin=4,xtal=14745600
+dtoverlay=sc16is752-i2c,addr=0x49,int_pin=12,xtal=14745600
+# VE.Can: MCP2515, 8 MHz crystal (v29.4), IRQ GPIO25, SPI0 CE0
+dtoverlay=mcp2515-can0,oscillator=8000000,interrupt=25,spimaxfrequency=10000000
+# --- VictronHat end ---

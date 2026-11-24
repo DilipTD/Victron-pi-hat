@@ -1,0 +1,71 @@
+#!/bin/bash
+# SetupHelper package: Victron Pi HAT (Venus OS, Raspberry Pi 3, classic GUI v1)
+standardPromptAndActions='yes'
+source "/data/SetupHelper/HelperResources/IncludeHelpers"
+
+CFG=/u-boot/config.txt
+PKG=/data/VictronHat
+QML=/opt/victronenergy/gui/qml
+BEGIN="# --- VictronHat begin"
+END="# --- VictronHat end ---"
+
+removeBlock ()
+{
+    [ -f $CFG ] && grep -q "$BEGIN" $CFG && sed -i "/$BEGIN/,/$END/d" $CFG
+    [ -f /data/rc.local ] && sed -i '\#VictronHat/hat-boot.sh#d' /data/rc.local
+}
+
+guiPatch ()   # $1 = install | uninstall
+{
+    mount -o remount,rw / 2>/dev/null
+    if [ "$1" == "install" ]; then
+        rm -f $QML/PageVictronHatPower.qml $QML/PageVictronHatTrends.qml $QML/HatTrend.qml
+        cp $PKG/gui/PageVictronHat*.qml $PKG/gui/HatBar.qml $PKG/gui/HatSub.qml $PKG/gui/HatScore.qml $QML/
+    else
+        rm -f $QML/PageVictronHat*.qml $QML/HatBar.qml $QML/HatTrend.qml $QML/HatSub.qml $QML/HatScore.qml
+    fi
+    sh $PKG/gui-v2/install-gui-v2.sh $1 || logMessage "GUI v2 plugin not installed (needs plugin compiler or prebuilt json) - classic GUI and D-Bus unaffected"
+    if [ -f $QML/PageSettings.qml ]; then
+        python3 $PKG/patch_gui.py $1 || logMessage "classic GUI menu patch skipped (see message above); GUI v2 and D-Bus/MQTT are unaffected"
+    else
+        logMessage "classic GUI (QML) not present - HAT status page skipped, use GUI v2 / hat-status.sh instead"
+    fi
+    mount -o remount,ro / 2>/dev/null
+    svc -t /service/gui 2>/dev/null
+}
+
+if [ $scriptAction == 'NONE' ] ; then
+    standardActionPrompt
+fi
+
+if [ $scriptAction == 'INSTALL' ] ; then
+    # v4.0 (board v28.0): the ADC diagnostics service is gone - stop and remove an old one
+    if [ -e /service/vichatdiag ]; then svc -d /service/vichatdiag 2>/dev/null; rm -rf /service/vichatdiag; fi
+    logMessage "Installing Victron Pi HAT configuration"
+    removeBlock
+    [ -f /data/config.txt.hat ] || cp $CFG /data/config.txt.hat
+    if grep -qs "Victron Pi HAT" ${HAT_DT:-/proc/device-tree/hat}/product ; then
+        # v20.9+ boards: the ID EEPROM carries the overlay, the firmware loads it.
+        # Adding the config.txt lines as well would create every device twice.
+        logMessage "HAT ID EEPROM found - board overlay loads automatically, config.txt left unchanged"
+    else
+        logMessage "no HAT ID EEPROM - adding the overlay lines to $CFG"
+        cat $PKG/hat_config.txt >> $CFG
+    fi
+    [ -f /data/rc.local ] || echo '#!/bin/sh' > /data/rc.local
+    echo "$PKG/hat-boot.sh   # VictronHat/hat-boot.sh" >> /data/rc.local
+    chmod +x /data/rc.local
+    guiPatch install
+    [ -e /data/apps/enabled/VictronHat ] && logMessage "GUI v2 status page: installed" || logMessage "GUI v2 status page: not installed (see message above)"
+    [ -f $QML/PageVictronHat.qml ] && logMessage "classic GUI status page: installed"
+    rebootNeeded=true
+fi
+
+if [ $scriptAction == 'UNINSTALL' ] ; then
+    logMessage "Removing Victron Pi HAT configuration"
+    removeBlock
+    guiPatch uninstall
+    rebootNeeded=true
+fi
+
+endScript INSTALL_SERVICE

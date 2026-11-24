@@ -1,0 +1,2 @@
+ACTION=="add", SUBSYSTEM=="tty", KERNEL=="ttySC[0-2]", ENV{VE_SERVICE}="vedirect", SYMLINK+="serial-starter/%k"
+ACTION=="add", SUBSYSTEM=="tty", KERNEL=="ttySC3", ENV{VE_SERVICE}="cgwacs", SYMLINK+="serial-starter/%k"

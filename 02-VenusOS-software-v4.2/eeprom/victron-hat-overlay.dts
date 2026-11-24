@@ -1,0 +1,127 @@
+/*
+ * Victron Pi HAT v24.1 - device-tree overlay stored in the HAT ID EEPROM (IC801).
+ * The Pi firmware applies it at boot, so /u-boot/config.txt needs no dtoverlay lines.
+ *   I2C1 (GPIO2/3): SC16IS752 @0x48 (IRQ GPIO4)  -> ttySC0/ttySC1 (J301, J302)
+ *                   SC16IS752 @0x49 (IRQ GPIO12) -> ttySC2/ttySC3 (J401, J402 RS485)
+ *   SPI0 CE0:       MCP2515 (IRQ GPIO25)         -> can0 (J501 VE.Can)
+ *   SPI0 CE1:       unused on board v28.0 (was the MCP3208 ADC1); spidev0.1 stays free
+ *   SPI0 CE2:       unused on board v28.0 (was ADC2, CS = GPIO16); spidev0.2 stays free
+ *   v29.4 crystals: both SC16IS752 = 14.7456 MHz (Y301, Y401), MCP2515 = 8 MHz (Y501).
+ */
+/dts-v1/;
+/plugin/;
+
+/ {
+	compatible = "brcm,bcm2835";
+
+	fragment@0 {
+		target-path = "/";
+		__overlay__ {
+			victron_hat_xtal: victron_hat_xtal {
+				compatible = "fixed-clock";
+				#clock-cells = <0>;
+				clock-frequency = <14745600>;	/* SC16IS752 Y301/Y401 */
+			};
+			victron_hat_can_xtal: victron_hat_can_xtal {
+				compatible = "fixed-clock";
+				#clock-cells = <0>;
+				clock-frequency = <8000000>;	/* MCP2515 Y501 */
+			};
+		};
+	};
+
+	fragment@1 {
+		target = <&gpio>;
+		__overlay__ {
+			victron_hat_uart_irq: victron_hat_uart_irq {
+				brcm,pins = <4 12>;
+				brcm,function = <0>;	/* input */
+				brcm,pull = <2>;	/* pull-up */
+			};
+			victron_hat_can_irq: victron_hat_can_irq {
+				brcm,pins = <25>;
+				brcm,function = <0>;	/* input */
+				brcm,pull = <0>;
+			};
+		};
+	};
+
+	fragment@2 {
+		target = <&i2c_arm>;
+		__overlay__ {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			status = "okay";
+
+			sc16is752@48 {
+				compatible = "nxp,sc16is752";
+				reg = <0x48>;
+				clocks = <&victron_hat_xtal>;
+				interrupt-parent = <&gpio>;
+				interrupts = <4 2>;	/* falling edge */
+				pinctrl-names = "default";
+				pinctrl-0 = <&victron_hat_uart_irq>;
+				gpio-controller;
+				#gpio-cells = <2>;
+			};
+
+			sc16is752@49 {
+				compatible = "nxp,sc16is752";
+				reg = <0x49>;
+				clocks = <&victron_hat_xtal>;
+				interrupt-parent = <&gpio>;
+				interrupts = <12 2>;	/* falling edge */
+				/* channel B = J402 RS485: RTSB drives SP3485 DE + /RE (active high).
+				 * Auto RS-485 direction with RTS HIGH while sending = kernel
+				 * "rts-active-low" (sets EFCR RTSINVER). Also applies to channel A
+				 * (VE.Direct 3), whose RTSA pin is unused; rx-during-tx keeps it full duplex. */
+				linux,rs485-enabled-at-boot-time;
+				rs485-rts-active-low;
+				rs485-rx-during-tx;
+				gpio-controller;
+				#gpio-cells = <2>;
+			};
+		};
+	};
+
+	fragment@3 {
+		target = <&spidev0>;
+		__overlay__ {
+			status = "disabled";
+		};
+	};
+
+	fragment@4 {
+		target = <&spi0>;
+		__overlay__ {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			status = "okay";
+			cs-gpios = <&gpio 8 1>, <&gpio 7 1>, <&gpio 16 1>;	/* CE0, CE1, CE2 = GPIO16 (v27.2 MCP3204) */
+
+			spidev@2 {
+				compatible = "rohm,dh2228fv";	/* plain spidev -> /dev/spidev0.2 */
+				reg = <2>;
+				spi-max-frequency = <1000000>;
+			};
+
+			mcp2515@0 {
+				compatible = "microchip,mcp2515";
+				reg = <0>;
+				pinctrl-names = "default";
+				pinctrl-0 = <&victron_hat_can_irq>;
+				spi-max-frequency = <10000000>;
+				interrupt-parent = <&gpio>;
+				interrupts = <25 8>;	/* level low */
+				clocks = <&victron_hat_can_xtal>;
+			};
+		};
+	};
+	fragment@5 {
+		target = <&spidev1>;
+		__overlay__ {
+			status = "okay";
+			spi-max-frequency = <1000000>;
+		};
+	};
+};

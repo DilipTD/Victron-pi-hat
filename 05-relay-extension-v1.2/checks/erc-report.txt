@@ -1,0 +1,21 @@
+wires 77, dangling ends 0, off-grid ends 0, unconnected pins 0
+ERC: 0 errors, 0 warnings
+netlist: 25 components, 18 nets (kicad-cli 7.0.11 export)
+  +5V              D1.1 D2.1 D3.1 D4.1 J5.5 K1.5 K2.5 K3.5 K4.5 R1.1 R2.1 R3.1 R4.1
+  /CH1_COM         J1.1 K1.2
+  /CH1_NO          J1.2 K1.3
+  /CH2_COM         J2.1 K2.2
+  /CH2_NO          J2.2 K2.3
+  /CH3_COM         J3.1 K3.2
+  /CH3_NO          J3.2 K3.3
+  /CH4_COM         J4.1 K4.2
+  /CH4_NO          J4.2 K4.3
+  /OUT1            D1.2 J5.1 K1.1 LED1.1
+  /OUT2            D2.2 J5.2 K2.1 LED2.1
+  /OUT3            D3.2 J5.3 K3.1 LED3.1
+  /OUT4            D4.2 J5.4 K4.1 LED4.1
+  GND              J5.6
+  Net-(LED1-A)     LED1.2 R1.2
+  Net-(LED2-A)     LED2.2 R2.2
+  Net-(LED3-A)     LED3.2 R3.2
+  Net-(LED4-A)     LED4.2 R4.2
